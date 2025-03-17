@@ -1,6 +1,6 @@
 const express = require("express");
 const { Pool } = require("pg");
-const bcrypt = require("bcrypt");  // 🔹 Para encriptar contraseñas
+const bcrypt = require("bcryptjs");  // 🔹 Usamos bcryptjs en vez de bcrypt
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -17,8 +17,8 @@ const pool = new Pool({
   port: process.env.DB_PORT || 5432,
 });
 
-// 📌 Ruta para registrar un nuevo usuario
-app.post("/register", async (req, res) => {
+// 📌 Ruta para registrar usuario (con /api/)
+app.post("/api/register", async (req, res) => {
   const { nombre, correo, password } = req.body;
 
   if (!nombre || !correo || !password) {
@@ -42,8 +42,8 @@ app.post("/register", async (req, res) => {
   }
 });
 
-// 📌 Ruta para iniciar sesión
-app.post("/login", async (req, res) => {
+// 📌 Ruta para iniciar sesión (con /api/)
+app.post("/api/login", async (req, res) => {
   const { correo, password } = req.body;
 
   if (!correo || !password) {
@@ -51,7 +51,6 @@ app.post("/login", async (req, res) => {
   }
 
   try {
-    // Buscar usuario por correo
     const result = await pool.query("SELECT * FROM usuarios WHERE correo = $1", [correo]);
 
     if (result.rows.length > 0) {
@@ -73,8 +72,8 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// 📌 Ruta para obtener todos los usuarios (solo para pruebas)
-app.get("/usuarios", async (req, res) => {
+// 📌 Ruta para obtener todos los usuarios (con /api/)
+app.get("/api/usuarios", async (req, res) => {
   try {
     const result = await pool.query("SELECT id, nombre, correo, creado_en FROM usuarios");
     res.json(result.rows);
@@ -84,7 +83,13 @@ app.get("/usuarios", async (req, res) => {
   }
 });
 
+// 📌 Ruta de prueba para saber si el servidor está corriendo
+app.get("/", (req, res) => {
+  res.send("🚀 Servidor funcionando correctamente");
+});
+
 // Iniciar el servidor
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en el puerto ${PORT}`);
 });
+
