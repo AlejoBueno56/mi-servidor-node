@@ -20,7 +20,7 @@ const pool = new Pool({
 app.post("/login", async (req, res) => {
   const { correo, password } = req.body;
 
-  if (!username || !password) {
+  if (!correo || !password) {
     return res.status(400).json({ success: false, message: "Faltan datos" });
   }
 
