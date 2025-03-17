@@ -13,6 +13,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
+import java.io.IOException
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,17 +47,15 @@ fun LoginScreen() {
         Text(text = "Inicio de Sesión", fontSize = 24.sp, color = Color.Blue)
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Campo de usuario
         OutlinedTextField(
             value = username,
             onValueChange = { username = it },
-            label = { Text("Usuario") },
+            label = { Text("Correo") },
             modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Campo de contraseña
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
@@ -62,13 +66,14 @@ fun LoginScreen() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Botón de inicio de sesión
         Button(
             onClick = {
-                if (username == "admin" && password == "1234") {
-                    context.startActivity(Intent(context, HomeActivity::class.java))
-                } else {
-                    showError = true
+                loginUser(username, password) { success ->
+                    if (success) {
+                        context.startActivity(Intent(context, HomeActivity::class.java))
+                    } else {
+                        showError = true
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth()
@@ -76,10 +81,44 @@ fun LoginScreen() {
             Text("Ingresar")
         }
 
-        // Mensaje de error si las credenciales son incorrectas
         if (showError) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = "Usuario o contraseña incorrectos", color = Color.Red)
         }
     }
+}
+
+
+// Función para hacer la petición HTTP
+fun loginUser(username: String, password: String, callback: (Boolean) -> Unit) {
+    val client = OkHttpClient()
+    val url = "https://mi-servidor-node.onrender.com/login"
+
+    val json = JSONObject()
+    json.put("correo", username)
+    json.put("password", password)
+
+    val body = json.toString().toRequestBody("application/json".toMediaTypeOrNull())
+
+    val request = Request.Builder()
+        .url(url)
+        .post(body)
+        .build()
+
+    client.newCall(request).enqueue(object : Callback {
+        override fun onFailure(call: Call, e: IOException) {
+            e.printStackTrace()
+            callback(false)
+        }
+
+        override fun onResponse(call: Call, response: Response) {
+            if (response.isSuccessful) {
+                val responseBody = response.body?.string()
+                val jsonResponse = JSONObject(responseBody ?: "{}")
+                callback(jsonResponse.optBoolean("success", false))
+            } else {
+                callback(false)
+            }
+        }
+    })
 }
