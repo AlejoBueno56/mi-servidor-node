@@ -1,8 +1,9 @@
-const express = require('express');
-const { Pool } = require('pg');  // 🔹 Importar Pool de PostgreSQL
+const express = require("express");
+const { Pool } = require("pg");
+const bcrypt = require("bcrypt");  // 🔹 Para encriptar contraseñas
 
 const app = express();
-const PORT = process.env.PORT || 3000;  // 🔹 Usar puerto dinámico
+const PORT = process.env.PORT || 10000;
 
 // Middleware para procesar JSON
 app.use(express.json());
@@ -16,7 +17,32 @@ const pool = new Pool({
   port: process.env.DB_PORT || 5432,
 });
 
-// Ruta para manejar el login
+// 📌 Ruta para registrar un nuevo usuario
+app.post("/register", async (req, res) => {
+  const { nombre, correo, password } = req.body;
+
+  if (!nombre || !correo || !password) {
+    return res.status(400).json({ success: false, message: "Faltan datos" });
+  }
+
+  try {
+    // Encriptar la contraseña
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Insertar usuario en la base de datos
+    await pool.query(
+      "INSERT INTO usuarios (nombre, correo, password, creado_en) VALUES ($1, $2, $3, NOW())",
+      [nombre, correo, hashedPassword]
+    );
+
+    res.json({ success: true, message: "Usuario registrado exitosamente" });
+  } catch (error) {
+    console.error("❌ Error al registrar usuario:", error);
+    res.status(500).json({ success: false, message: "Error en el servidor" });
+  }
+});
+
+// 📌 Ruta para iniciar sesión
 app.post("/login", async (req, res) => {
   const { correo, password } = req.body;
 
@@ -25,19 +51,36 @@ app.post("/login", async (req, res) => {
   }
 
   try {
-    const result = await pool.query(
-      "SELECT * FROM usuarios WHERE correo = $1 AND password = $2",
-      [correo, password]
-    );
+    // Buscar usuario por correo
+    const result = await pool.query("SELECT * FROM usuarios WHERE correo = $1", [correo]);
 
     if (result.rows.length > 0) {
-      res.json({ success: true, message: "Inicio de sesión exitoso" });
+      const user = result.rows[0];
+
+      // Comparar contraseña encriptada
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (isMatch) {
+        res.json({ success: true, message: "Inicio de sesión exitoso" });
+      } else {
+        res.status(401).json({ success: false, message: "Contraseña incorrecta" });
+      }
     } else {
-      res.status(401).json({ success: false, message: "Usuario o contraseña incorrectos" });
+      res.status(404).json({ success: false, message: "Usuario no encontrado" });
     }
   } catch (error) {
-    console.error("❌ Error al conectar:", error);
-    res.status(500).json({ success: false, message: "Error de conexión con la base de datos" });
+    console.error("❌ Error en el login:", error);
+    res.status(500).json({ success: false, message: "Error en el servidor" });
+  }
+});
+
+// 📌 Ruta para obtener todos los usuarios (solo para pruebas)
+app.get("/usuarios", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT id, nombre, correo, creado_en FROM usuarios");
+    res.json(result.rows);
+  } catch (error) {
+    console.error("❌ Error al obtener usuarios:", error);
+    res.status(500).json({ success: false, message: "Error en el servidor" });
   }
 });
 
