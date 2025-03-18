@@ -19,19 +19,19 @@ const pool = new Pool({
 
 // 📌 Ruta para registrar usuario (con /api/)
 app.post("/api/register", async (req, res) => {
-  const { nombre, correo, password } = req.body;
+  const { nombre, correo, contraseña } = req.body;
 
-  if (!nombre || !correo || !password) {
+  if (!nombre || !correo || !contraseña) {
     return res.status(400).json({ success: false, message: "Faltan datos" });
   }
 
   try {
     // Encriptar la contraseña
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(contraseña, 10);
 
     // Insertar usuario en la base de datos
     await pool.query(
-      "INSERT INTO usuarios (nombre, correo, password, creado_en) VALUES ($1, $2, $3, NOW())",
+      "INSERT INTO usuarios (nombre, correo, contraseña, creado_en) VALUES ($1, $2, $3, NOW())",
       [nombre, correo, hashedPassword]
     );
 
@@ -51,13 +51,13 @@ app.post("/api/login", async (req, res) => {
   }
 
   try {
-    const result = await pool.query("SELECT * FROM usuarios WHERE correo = $1", [correo]);
+    const result = await pool.query("SELECT id, nombre, correo, contraseña FROM usuarios WHERE correo = $1", [correo]);
 
     if (result.rows.length > 0) {
       const user = result.rows[0];
 
       // Comparar contraseña encriptada
-      const isMatch = await bcrypt.compare(password, user.password);
+      const isMatch = await bcrypt.compare(password, user.contraseña);
       if (isMatch) {
         res.json({ success: true, message: "Inicio de sesión exitoso" });
       } else {
