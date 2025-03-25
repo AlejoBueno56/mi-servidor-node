@@ -91,10 +91,10 @@ app.post("/register", async (req, res) => {
 });
 app.get("/informacion", async (req, res) => {
     try {
-        const result = await pool.query("SELECT * FROM informacion_empresa ORDER BY fecha DESC");
+        const result = await pool.query("SELECT * FROM informacion_empresa");
         res.json(result.rows);
     } catch (error) {
-        console.error("Error obteniendo la información:", error);
+        console.error("Error en /informacion:", error);
         res.status(500).json({ error: "Error del servidor" });
     }
 });
