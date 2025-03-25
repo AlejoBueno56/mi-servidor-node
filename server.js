@@ -98,16 +98,48 @@ app.get("/informacion", async (req, res) => {
         res.status(500).json({ error: "Error del servidor" });
     }
 });
-app.post("/informacion", async (req, res) => {
+// Ruta para obtener promociones
+app.get("/promociones", async (req, res) => {
     try {
-        const { titulo, descripcion } = req.body;
-        const result = await pool.query(
-            "INSERT INTO informacion_empresa (titulo, descripcion, fecha) VALUES ($1, $2, NOW()) RETURNING *",
-            [titulo, descripcion]
-        );
-        res.status(201).json(result.rows[0]);
+        const result = await pool.query("SELECT promo FROM informacion_empresa LIMIT 1");
+        res.json(result.rows[0] || { promo: "" });
     } catch (error) {
-        console.error("Error en /informacion:", error);
+        console.error("Error obteniendo promociones:", error);
+        res.status(500).json({ error: "Error del servidor" });
+    }
+});
+
+// Ruta para obtener ventajas
+app.get("/ventajas", async (req, res) => {
+    try {
+        const result = await pool.query("SELECT ventajas FROM informacion_empresa LIMIT 1");
+        res.json(result.rows[0] || { ventajas: "" });
+    } catch (error) {
+        console.error("Error obteniendo ventajas:", error);
+        res.status(500).json({ error: "Error del servidor" });
+    }
+});
+
+// Ruta para actualizar promociones
+app.post("/promociones", async (req, res) => {
+    try {
+        const { promo } = req.body;
+        await pool.query("UPDATE informacion_empresa SET promo = $1 WHERE id = 1", [promo]);
+        res.json({ message: "Promoción actualizada" });
+    } catch (error) {
+        console.error("Error actualizando promoción:", error);
+        res.status(500).json({ error: "Error del servidor" });
+    }
+});
+
+// Ruta para actualizar ventajas
+app.post("/ventajas", async (req, res) => {
+    try {
+        const { ventajas } = req.body;
+        await pool.query("UPDATE informacion_empresa SET ventajas = $1 WHERE id = 1", [ventajas]);
+        res.json({ message: "Ventajas actualizadas" });
+    } catch (error) {
+        console.error("Error actualizando ventajas:", error);
         res.status(500).json({ error: "Error del servidor" });
     }
 });
