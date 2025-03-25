@@ -98,6 +98,19 @@ app.get("/informacion", async (req, res) => {
         res.status(500).json({ error: "Error del servidor" });
     }
 });
+app.post("/informacion", async (req, res) => {
+    try {
+        const { titulo, descripcion } = req.body;
+        const result = await pool.query(
+            "INSERT INTO informacion_empresa (titulo, descripcion, fecha) VALUES ($1, $2, NOW()) RETURNING *",
+            [titulo, descripcion]
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (error) {
+        console.error("Error en /informacion:", error);
+        res.status(500).json({ error: "Error del servidor" });
+    }
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
