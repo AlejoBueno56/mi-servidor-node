@@ -24,7 +24,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -73,7 +72,7 @@ fun HomeScreen() {
                 Text(text = "Menú", fontSize = 22.sp, color = Color.Blue, textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(16.dp))
                 DrawerOption("Planes", Icons.Filled.Devices) { currentScreen = "Planes" }
-                DrawerOption("Paga tu plan", Icons.Filled.Payment) { currentScreen = "Paga tu plan?" }
+                DrawerOption("Paga tu factura", Icons.Filled.Payment) { currentScreen = "Paga tu factura" }
                 DrawerOption("¡Quienes Somos?", Icons.Filled.CoPresent) { currentScreen = "¿Quienes somos?" }
                 DrawerOption("Cobertura", Icons.Filled.LocationOn) { currentScreen = "Cobertura" }
                 DrawerOption("SpeedTest", Icons.Filled.Speed) { currentScreen = "SpeedTest" }

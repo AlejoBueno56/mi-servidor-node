@@ -1,4 +1,6 @@
 require("dotenv").config();
+console.log("JWT_SECRET:", process.env.JWT_SECRET || "No definido"); // 🔴 Verifica si la variable está cargada
+
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -87,8 +89,16 @@ app.post("/register", async (req, res) => {
         res.status(500).json({ error: "Error del servidor" });
     }
 });
+app.get("/informacion", async (req, res) => {
+    try {
+        const result = await pool.query("SELECT * FROM informacion_empresa ORDER BY fecha DESC");
+        res.json(result.rows);
+    } catch (error) {
+        console.error("Error obteniendo la información:", error);
+        res.status(500).json({ error: "Error del servidor" });
+    }
+});
 
-// Configurar el puerto dinámico para Render
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
 
