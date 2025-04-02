@@ -143,7 +143,39 @@ app.post("/ventajas", async (req, res) => {
         res.status(500).json({ error: "Error del servidor" });
     }
 });
+app.put("/update-password", async (req, res) => {
+    try {
+        const { nombre_usuario, oldPassword, newPassword } = req.body;
 
+        // Verificar si el usuario existe
+        const userQuery = await pool.query("SELECT * FROM usuarios WHERE nombre_usuario = $1", [nombre_usuario]);
+
+        if (userQuery.rows.length === 0) {
+            return res.status(404).json({ error: "Usuario no encontrado" });
+        }
+
+        const user = userQuery.rows[0];
+
+        // Verificar si la contraseña actual es correcta
+        const passwordMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!passwordMatch) {
+            return res.status(401).json({ error: "Contraseña actual incorrecta" });
+        }
+
+        // Hashear la nueva contraseña
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+        // Actualizar la contraseña en la base de datos
+        await pool.query("UPDATE usuarios SET password = $1 WHERE nombre_usuario = $2", [hashedPassword, nombre_usuario]);
+
+        res.json({ message: "Contraseña actualizada con éxito" });
+
+    } catch (error) {
+        console.error("Error en /update-password:", error);
+        res.status(500).json({ error: "Error del servidor" });
+    }
+});
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
 
